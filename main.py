@@ -9,6 +9,7 @@ class Character:
         self.magic = magic
         self.level = 1
         self.exp = 0
+        self.inventory = []
 
     def level_up(self):
         if self.exp >= 100:
@@ -22,7 +23,10 @@ class Character:
             print(f"New stats - HP: {self.hp}, Attack: {self.attack}, Defense: {self.defense}, Magic: {self.magic}")
 
     def take_damage(self, amount):
-        self.hp -= max(0, amount - self.defense)
+        damage_taken = max(0, amount - self.defense)
+        self.hp -= damage_taken
+        print(f"\nThe enemy deals {damage_taken} damage to you.")
+        print(f"Your current health: {self.hp}")
         if self.hp <= 0:
             print("\nYou have been defeated.")
             return True
@@ -44,7 +48,7 @@ class Character:
             spell_damage = self.magic * 2
             print(f"\nYou cast a spell on the {enemy['name']} for {spell_damage} damage!")
             enemy['hp'] -= spell_damage
-            self.magic -= 1  # Decrease magic points
+            self.magic -= 1
             if enemy['hp'] <= 0:
                 print(f"You defeated the {enemy['name']}!")
                 self.exp += 50
@@ -53,6 +57,10 @@ class Character:
         else:
             print("\nYou're out of magic!")
         return False
+
+    def add_to_inventory(self, item):
+        self.inventory.append(item)
+        print(f"\nYou picked up: {item}")
 
 def choose_class():
     classes = {
@@ -75,87 +83,101 @@ def choose_class():
     print(f"\nYou have chosen the {choice} class!\n")
     return classes[choice]
 
-def part1(player):
-    print("\n--- Part 1: The Quest Begins ---")
-    print("You start in the snowy village of Frostvale, known for its harsh winters.")
-    print("The village elder approaches you, pleading for help to find the Emberstone, a powerful artifact hidden in the Ironclad Caves.")
-    print("The Emberstone is the only hope to restore warmth to Frostvale.\n")
+def display_location(location, map_directions, items_in_rooms):
+    descriptions = {
+        "village": "You are in the village of Frostvale, where the elders gather around a small fire, waiting for someone to retrieve the Emberstone.",
+        "path": "You are on the path leading towards the mountains. The air is cold, and you hear distant howls.",
+        "forest": "You find yourself in a dense, dark forest. The trees are thick, and shadows move in the corners of your vision.",
+        "clearing": "A small clearing in the forest, with sunlight breaking through. The ground is covered in strange runes.",
+        "lake": "You arrive at a frozen lake, the surface glistening under the pale sunlight. The ice looks fragile in places.",
+        "cave_entrance": "You stand at the entrance of the Ironclad Caves. The shadows seem to watch you, and the air is dense with mystery.",
+        "cave_depths": "Deeper inside the cave, strange inscriptions line the walls. The air grows colder, and the silence is unsettling.",
+        "chamber": "You enter the final chamber of the cave. The Emberstone lies in the center, surrounded by enchanted stones and guarded by the spirit of Malak."
+    }
+    
+    print(f"\n{descriptions[location]}")
+    
+    exits = map_directions[location]
+    print("\nYou can go in the following directions:")
+    for direction, destination in exits.items():
+        print(f"- {direction.capitalize()} to {destination.replace('_', ' ').capitalize()}")
+    
+    if location in items_in_rooms:
+        item = items_in_rooms[location]
+        print(f"\nYou see a {item} here.")
 
-    input("Press Enter to begin your journey...")
-
-    # Minor obstacle
-    enemy = {"name": "Wolf", "hp": 30, "attack": 8}
-    print(f"\nOn your way to the cave, a wild {enemy['name']} appears!\n")
-    battle(player, enemy)
-
-def part2(player):
-    print("\n--- Part 2: The Descent into Darkness ---")
-    print("You arrive at the Ironclad Caves, a dark and dangerous place filled with unknown perils.")
-    print("Ancient inscriptions hint that the Emberstone is cursed, and its protector is a fallen hero, Malak, betrayed long ago.")
-
-    input("Press Enter to delve deeper into the cave...")
-
-    # Intermediate enemy
-    enemy = {"name": "Shadow Creature", "hp": 50, "attack": 12}
-    print(f"\nA {enemy['name']} appears from the darkness!\n")
-    battle(player, enemy)
-
-def part3(player):
-    print("\n--- Part 3: The Final Confrontation ---")
-    print("At last, you reach the deepest chamber of the caves, where the Emberstone lies surrounded by enchanted stones.")
-    print("Suddenly, a spectral figure appears before you. It is Malak, the fallen hero, now a vengeful spirit guarding the Emberstone.\n")
-    print("Malak speaks, 'Only one with a worthy heart can claim the Emberstone. Will you prove yourself?'\n")
-
-    action = input("Choose your action: [fight or reason]: ").lower()
-    if action == "fight":
-        enemy = {"name": "Malak, the Cursed Spirit", "hp": 80, "attack": 15}
-        print("\nYou choose to fight Malak!\n")
-        battle(player, enemy)
-        print("\nWith Malak defeated, you claim the Emberstone and return to Frostvale.")
-    elif action == "reason":
-        print("\nYou choose to reason with Malak, speaking of his honorable past.")
-        print("Malak, moved by your words, finds peace and willingly grants you the Emberstone.\n")
-        print("With the Emberstone in hand, you return to Frostvale, restoring warmth and peace to the village.")
+def move_player(location, direction, map_directions):
+    if direction in map_directions[location]:
+        new_location = map_directions[location][direction]
+        return new_location
     else:
-        print("Invalid choice. Malak becomes angry and attacks you!")
-        enemy = {"name": "Malak, the Cursed Spirit", "hp": 80, "attack": 15}
-        battle(player, enemy)
-        print("\nWith Malak defeated, you claim the Emberstone and return to Frostvale.")
+        print("\nYou can't go that way.")
+        return location
 
-def battle(player, enemy):
-    while player.hp > 0 and enemy["hp"] > 0:
-        action = input("\nChoose an action: [attack, spell, stats, flee]: ").lower()
-
-        if action == "attack":
-            if player.attack_enemy(enemy):
-                return  # Enemy defeated
-            if player.take_damage(enemy["attack"]):
-                print("Game Over.")
-                exit()
-
-        elif action == "spell":
-            if player.cast_spell(enemy):
-                return  # Enemy defeated
-            if player.take_damage(enemy["attack"]):
-                print("Game Over.")
-                exit()
-
-        elif action == "stats":
-            print(f"\nStats: HP: {player.hp}, Attack: {player.attack}, Defense: {player.defense}, Magic: {player.magic}, Level: {player.level}, EXP: {player.exp}")
-
-        elif action == "flee":
-            print("\nYou fled from battle.")
-            break
-        else:
-            print("Invalid action.")
+def show_commands():
+    print("\nAvailable commands:")
+    print("- go <direction>: Move in the specified direction (e.g., 'go north').")
+    print("- pick up <item>: Pick up an item in the room.")
+    print("- inventory: View your current inventory.")
+    print("- stats: View your character's current stats.")
 
 def main():
     player = choose_class()
-    part1(player)
-    part2(player)
-    part3(player)
+    location = "village"
+    
+    map_directions = {
+        "village": {"north": "path", "east": "forest"},
+        "path": {"south": "village", "north": "cave_entrance", "east": "clearing"},
+        "forest": {"west": "village", "east": "lake"},
+        "clearing": {"west": "path", "east": "cave_entrance"},
+        "lake": {"west": "forest"},
+        "cave_entrance": {"south": "path", "west": "clearing", "north": "cave_depths"},
+        "cave_depths": {"south": "cave_entrance", "north": "chamber"},
+        "chamber": {"south": "cave_depths"}
+    }
+
+    items_in_rooms = {
+        "village": "healing potion",
+        "clearing": "ancient rune",
+        "lake": "mystic herb",
+        "cave_entrance": "torch",
+        "cave_depths": "spell scroll"
+    }
+
+    print("\n--- Part 1: The Quest Begins ---")
+    print("The elder has tasked you with retrieving the Emberstone to restore warmth to Frostvale.")
+    
+    while location != "chamber":
+        display_location(location, map_directions, items_in_rooms)
+        
+        # Show the available commands each turn
+        show_commands()
+        
+        command = input("\nWhat would you like to do? ").lower().split()
+
+        if command[0] == "go":
+            direction = command[1]
+            location = move_player(location, direction, map_directions)
+
+        elif command[0] == "pick" and command[1] == "up":
+            item = items_in_rooms.get(location)
+            if item:
+                player.add_to_inventory(item)
+                del items_in_rooms[location]
+            else:
+                print("There is nothing here to pick up.")
+
+        elif command[0] == "inventory":
+            print(f"\nInventory: {', '.join(player.inventory) if player.inventory else 'Empty'}")
+
+        elif command[0] == "stats":
+            print(f"\nStats: HP: {player.hp}, Attack: {player.attack}, Defense: {player.defense}, Magic: {player.magic}")
+
+        else:
+            print("\nInvalid command. Please try again.")
+
     print("\n--- The End ---")
-    print("Thank you for playing! You have completed the quest to restore warmth to Frostvale.")
+    print("You have completed the quest and restored warmth to Frostvale!")
 
 if __name__ == "__main__":
     main()
